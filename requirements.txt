@@ -1,0 +1,6 @@
+requests>=2.26.0
+tqdm>=4.62.3
+psutil>=5.9.0
+concurrent-futures>=3.0.5
+urllib3>=1.26.7
+xml-parser>=0.1.0 
