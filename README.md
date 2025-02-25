@@ -22,12 +22,12 @@
 ## 安装
 
 1. 克隆仓库到本地：
-```
-git clone <repository-url>
+```bash
+git clone https://github.com/vmoranv/aola_auto_extract.git
 ```
 
 2. 安装所需依赖：
-```
+```bash
 pip install -r requirements.txt
 ```
 
@@ -57,22 +57,22 @@ python auto_extract_all.py
 如果需要手动处理特定的版本文件：
 
 1. 提取版本XML：
-```
+```bash
 python 自动提取版本xml.py
 ```
 
 2. 比较XML差异：
-```
+```bash
 python 对比xml.py
 ```
 
 3. 下载对应SWF文件：
-```
+```bash
 python 根据版本xml下载对应swf.py
 ```
 
 4. 导出SWF文件资源：
-```
+```bash
 python ffdec_export.py
 ```
 
@@ -84,6 +84,7 @@ python ffdec_export.py
 - `根据版本xml下载对应swf.py` - SWF文件下载工具
 - `ffdec_export.py` - FFDec导出工具
 - `提取包含特定字符的文件到指定文件夹.py` - 文件筛选工具
+- `auto_extract_all_without_diff_xml.py` - 主程序`fork`而来,需要传入新旧两个xml
 
 ## 日志
 
@@ -93,7 +94,7 @@ python ffdec_export.py
 
 提取的资源文件保存在`output`目录下，结构如下：
 
-```
+```bash
 output/
   └── diff_旧版本_新版本/
       ├── swf/         # 下载的SWF文件
