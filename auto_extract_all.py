@@ -11,6 +11,9 @@ from 对比xml import load_xml, compare_xml, write_new_xml
 from 根据版本xml下载对应swf import SwfDownloader
 from ffdec_export import FFDecExporter
 
+
+
+
 class AutoExtractor:
     def __init__(self):
         """初始化自动提取器喵~"""

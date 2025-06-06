@@ -4,6 +4,8 @@ import logging
 from typing import Optional
 import psutil
 from tqdm import tqdm
+import re
+from datetime import datetime
 
 # 导入其他脚本
 from 自动提取版本xml import VersionMonitor
@@ -21,6 +23,48 @@ class AutoExtractor:
         self.setup_system_info()
         self.old_xml_path = ""
         self.new_xml_path = ""
+        # 添加日期过滤变量
+        self.start_date = ""
+        self.end_date = ""
+
+    @staticmethod
+    def parse_version_date(version_str):
+        """从版本字符串中提取日期（前8位）"""
+        if len(version_str) >= 8:
+            date_part = version_str[:8]
+            try:
+                return datetime.strptime(date_part, '%Y%m%d')
+            except ValueError:
+                return None
+        return None
+
+    @staticmethod
+    def filter_xml_by_date_range(xml_root, start_date_str, end_date_str):
+        """根据日期范围过滤XML条目"""
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y%m%d') if start_date_str else None
+            end_date = datetime.strptime(end_date_str, '%Y%m%d') if end_date_str else None
+        except ValueError as e:
+            logging.error(f"日期格式错误: {e}")
+            return None
+        
+        filtered_elements = []
+        
+        for element in xml_root.findall('.//f'):
+            version = element.get('v', '')
+            element_date = AutoExtractor.parse_version_date(version)
+            if element_date:
+                # 检查是否在指定日期范围内
+                if start_date and element_date < start_date:
+                    continue
+                if end_date and element_date > end_date:
+                    continue
+                filtered_elements.append(element)
+            elif not start_date and not end_date:
+                # 如果没有指定日期范围，包含所有元素
+                filtered_elements.append(element)
+        
+        return filtered_elements
 
     def setup_system_info(self):
         """设置系统信息和优化线程配置喵~"""
@@ -76,6 +120,16 @@ class AutoExtractor:
         self.new_xml_path = input("请输入新版本XML文件路径: ").strip()
         self.ffdec_path = input("请输入FFDec.jar完整路径: ").strip()
         
+        # 添加时间段过滤选项
+        print("\n=== 时间段过滤设置（可选）===")
+        print("时间格式: YYYYMMDD (如: 20250101)")
+        print("留空表示不限制该端点")
+        self.start_date = input("请输入开始日期 (留空表示不限制): ").strip()
+        self.end_date = input("请输入结束日期 (留空表示不限制): ").strip()
+        
+        if self.start_date or self.end_date:
+            print(f"已设置时间过滤: {self.start_date or '不限制'} 到 {self.end_date or '不限制'}")
+        
     def monitor_system_resources(self):
         """监控系统资源使用情况喵~"""
         cpu_percent = psutil.cpu_percent()
@@ -103,6 +157,25 @@ class AutoExtractor:
 
             # 比较XML并生成差异文件
             different_elements = compare_xml(old_root, new_root)
+            
+            # 如果设置了时间过滤，则应用过滤
+            if (self.start_date or self.end_date) and different_elements:
+                logging.info(f"应用时间过滤: {self.start_date or '不限制'} 到 {self.end_date or '不限制'}")
+                # 创建临时XML根节点用于过滤
+                import xml.etree.ElementTree as ET
+                temp_root = ET.Element("version")
+                for elem in different_elements:
+                    temp_root.append(elem)
+                
+                # 应用时间过滤
+                filtered_elements = self.filter_xml_by_date_range(temp_root, self.start_date, self.end_date)
+                if filtered_elements:
+                    different_elements = filtered_elements
+                    logging.info(f"时间过滤后剩余 {len(different_elements)} 个条目")
+                else:
+                    logging.info("时间过滤后没有符合条件的条目")
+                    return None
+            
             if different_elements:
                 write_new_xml(different_elements, diff_xml)
                 logging.info(f"已生成测试差异文件: {diff_xml}")
